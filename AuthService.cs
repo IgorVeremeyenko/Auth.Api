@@ -15,8 +15,8 @@ namespace Auth.Api
                 ? new UserModel
                 {
                     Id = 15,
-                    FirstName = "Vasya",
-                    LastName = "Doe"
+                    FirstName = "Igor",
+                    LastName = "Veremeyemko"
                 }
                 : null;
         }
