@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,7 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;
 using System;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
 
 namespace Auth.Api
 {
@@ -25,6 +27,7 @@ namespace Auth.Api
         {
 
             services.AddControllers();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth.Api", Version = "v1" });
@@ -38,15 +41,27 @@ namespace Auth.Api
                 options.ExpireTimeSpan = TimeSpan.FromDays(365);
                 options.SlidingExpiration = true;
             });
-            services.AddScoped<IAuthService, AuthService>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
-                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    options.RequireHttpsMetadata = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        IssuerSigningKey = 
-                    }
-                })
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(
+                                Configuration["SigningKey"])),
+
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
+            services.AddCors(
+           options => options.AddPolicy("devCors", opts => opts
+           .AllowAnyOrigin()
+           .AllowAnyHeader()
+           .AllowAnyMethod()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,6 +72,7 @@ namespace Auth.Api
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Auth.Api v1"));
+                app.UseCors("devCors");
             }
 
             app.UseHttpsRedirection();
