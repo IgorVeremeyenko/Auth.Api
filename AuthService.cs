@@ -2,6 +2,7 @@ using Auth.Api.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -27,8 +28,8 @@ namespace Auth.Api
         {
             return new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, model.Id.ToString()),
-                new Claim(ClaimTypes.Name, model.FullName),
+                new Claim(ClaimTypes.NameIdentifier, JsonConvert.SerializeObject(model.Id.ToString())),
+                new Claim(ClaimTypes.Name, JsonConvert.SerializeObject(model.FullName)),
                 new Claim("permissions", nameof(Permission.AccessExtended))
             };
         }
